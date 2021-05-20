@@ -1,4 +1,6 @@
 # FloodCam-WUSFeats
+- Daniel Buscombe, Marda Science -
+
 Flooded Road Detector using (weakly-/un-)supervised feature extraction, and uncoupled classification
 
 ### Supervised Deep Learning
