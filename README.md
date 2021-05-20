@@ -14,13 +14,13 @@ Here I explore two alternatives to the above, that relax the level of supervisio
 
 #### Model 1
 supervised "uncoupled" classification from unsupervised feature extraction (baseline method)
---> extract 100 principal components, then kNN classification
---> lowest amount of supervision; no supervised feature extraction, no explicit coupling of features to classes (kNN functions like a lookup table)
+* extract 100 principal components, then kNN classification
+* lowest amount of supervision; no supervised feature extraction, no explicit coupling of features to classes (kNN functions like a lookup table)
 
 #### Model 2
 supervised "uncoupled" classification from features from weakly supervised feature extraction
---> use convolution layers, global pooling, and dense layer with no activation to create embeddings from images
---> weight the convolution layers using a loss function that just positions embeddings in embedding space such that embeddings
---> (embeddings different from feature vectors becos dont change size with different sized images)
---> medium supervision; weakly supervised feature extraction, no explicit coupling of features to classes (kNN functions like a lookup table)
---> relative few parameters (~300,000), scales with convolution layer sizes
+* use convolution layers, global pooling, and dense layer with no activation to create embeddings from images
+* weight the convolution layers using a loss function that just positions embeddings in embedding space such that embeddings are more similar to similar classes than different classes, so a very minimal bar
+* (embeddings different from feature vectors becos dont change size with different sized images)
+* medium supervision; weakly supervised feature extraction, no explicit coupling of features to classes (kNN functions like a lookup table)
+* relative few parameters (~300,000), scales with convolution layer sizes
