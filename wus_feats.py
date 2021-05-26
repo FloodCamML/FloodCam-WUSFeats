@@ -57,6 +57,7 @@ from collections import Counter
 from collections import defaultdict
 from PIL import Image
 from skimage.io import imread
+import pickle
 
 #numerica
 import numpy as np
@@ -198,8 +199,8 @@ class EmbeddingModel(keras.Model):
 
 ##==================================================================
 
-train_files = glob('All_Photos/TrainPhotosRecoded/*water*.jpg')[::2]
-test_files = glob('All_Photos/TrainPhotosRecoded/*water*.jpg')[1::2]
+train_files = glob('data/TrainPhotosRecoded/*water*.jpg')[::2]
+test_files = glob('data/TrainPhotosRecoded/*water*.jpg')[1::2]
 
 CLASSES = ['no water', 'water'] #'not sure',
 class_dict={'no_water':0,  'water':1} #'not_sure':1,
@@ -209,9 +210,9 @@ lr = 5e-4
 # n_neighbors = 3
 
 # want a long feature vector for tsne mapping into just two dimensions for viz
-num_embedding_dims = 512 #32 #100
+num_embedding_dims = 128 #32 #100
 
-size_vector = [600,400,200,100] #image sizes to use
+size_vector = [224] #600,400,200,100] #image sizes to use
 
 num_classes = len(class_dict)
 print(num_classes)
@@ -287,6 +288,8 @@ for height_width in size_vector: #800,600,
     del x_train, embeddings
     # just save the trained models
 
+    exec('model'+str(height_width)+'.save("Rmodel'+str(height_width)+'")')
+
 
 K.clear_session()
 
@@ -321,6 +324,7 @@ for height_width in size_vector: #800,600,
 
     exec('embeddings = model'+str(height_width)+'.predict(x_train)')
     del x_train
+    ## normalize in prediction mode????????????
     E.append(tf.nn.l2_normalize(embeddings, axis=-1).numpy())
     del embeddings
 
@@ -439,6 +443,7 @@ for height_width in size_vector: #800,600,
 
     exec('embeddings = model'+str(height_width)+'.predict(x_test)')
     del x_test
+    ##normalize in prediction mode??????
     E.append(tf.nn.l2_normalize(embeddings, axis=-1).numpy())
     del embeddings
 
@@ -452,10 +457,17 @@ embeddings_test = np.hstack(E) #np.cast(E,'float32')
 for n_neighbors in [7,9,11]:
     exec('knn'+str(n_neighbors)+'= KNeighborsClassifier(n_neighbors=n_neighbors)')
     exec('knn'+str(n_neighbors)+'.fit(embeddings_train, y_train)') #.numpy()
-
+    knnPickle = open('knn'+str(n_neighbors)+'.pkl', 'wb')
+    exec('pickle.dump(knn'+str(n_neighbors)+', knnPickle)')
+    
+ 
 #     exec('y_pred'+str(n_neighbors)+' = knn'+str(n_neighbors)+'.predict_proba(embeddings_test)')
-    K.clear_session()
+#    K.clear_session()                     
 
+
+# # load the model from disk
+# loaded_model = pickle.load(open('knnpickle_file', 'rb'))
+# result = loaded_model.predict(X_test) 
 
 # test kNN model
 for n_neighbors in [7,9,11]:
@@ -551,9 +563,9 @@ plt.close()
 
 num_components=100
 
-# pca = PCA(n_components=num_components)
-# reduced = pca.fit_transform(x_train.reshape(len(x_train),-1))
-# print('Cumulative variance explained by {} principal components: {}'.format(num_components, np.sum(pca.explained_variance_ratio_)))
+pca = PCA(n_components=num_components)
+reduced = pca.fit_transform(x_train.reshape(len(x_train),-1))
+print('Cumulative variance explained by {} principal components: {}'.format(num_components, np.sum(pca.explained_variance_ratio_)))
 #
 for n_neighbors in [7,9,11]:
     exec('pcaknn'+str(n_neighbors)+'= KNeighborsClassifier(n_neighbors=n_neighbors)')
@@ -575,13 +587,16 @@ for height_width in size_vector: #800,600,
 
     pca = PCA(n_components=num_components)
     reduced_test = pca.fit_transform(x_test.reshape(len(x_test),-1))
-
-    exec('pcaknn'+str(n_neighbors)+'= KNeighborsClassifier(n_neighbors=n_neighbors)')
-
+    
     # test kNN model
     for n_neighbors in [7,9,11]:
+        exec('pcaknn'+str(n_neighbors)+'= KNeighborsClassifier(n_neighbors=n_neighbors)')
+        exec('pcaknn'+str(n_neighbors)+'.fit(reduced, y_train)') #.numpy()
         exec('score = pcaknn'+str(n_neighbors)+'.score(reduced_test, y_test)')
         print('pca-KNN score: %f' % score) #knn3.score(embeddings_test, y_test)
+
+        pcaknnPickle = open('pcaknn'+str(n_neighbors)+'.pkl', 'wb')
+        exec('pickle.dump(pcaknn'+str(n_neighbors)+', pcaknnPickle)')
 
 # image size: 400
 # pca-KNN score: 0.715556
@@ -603,7 +618,7 @@ for height_width in size_vector: #800,600,
 
 ## read in 'not sure' images to classify
 
-notsure_files = glob('All_Photos/TrainPhotosRecoded/*not*.jpg')
+notsure_files = glob('data/TrainPhotosRecoded/*not*.jpg')
 
 E = []
 for height_width in size_vector: #800,600,
